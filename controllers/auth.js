@@ -1,7 +1,8 @@
 import userSchema from "../models/userSchema.js";
 import ErrorResponse from "../utils/errorResponse.js";
+import sendTokens from "../utils/sendTokens.js";
 
-export const registerController = async (req, res, next) => {
+export const register = async (req, res, next) => {
     const { username, email, password } = req.body;
     try {
         const newUser = await userSchema.create({
@@ -18,7 +19,7 @@ export const registerController = async (req, res, next) => {
     }
 };
 
-export const loginController = async (req, res, next) => {
+export const login = async (req, res, next) => {
     const { email, password } = req.body;
     if (!email || !password) return next(new ErrorResponse("Please enter email or password", 400));
     try {
@@ -29,7 +30,6 @@ export const loginController = async (req, res, next) => {
         if (!isMatch) return next(new ErrorResponse("Invalid Credentials", 401));
 
         await sendTokens(user, 200, res, next)
-
     } catch (error) {
         next(error);
     }
@@ -41,26 +41,23 @@ export const refreshToken = async (req, res, next) => {
     try {
         const user = await userSchema.findOne({ refreshToken: rt });
         if (!user) return next(new ErrorResponse("No Token Found , Access Denied", 403))
-        const refreshTheTokens = user.refreshTheTokens();
-        await user.save();
-        res.status(201).json({
-            success: true,
-            refreshTheTokens
-        })
+        await sendTokens(user, 201, res, next)
     } catch (error) {
         next(error)
     }
 
 }
 
-export const logoutController = async (req, res, next) => {
+export const logout = async (req, res, next) => {
     const { rt } = req.signedCookies;
     if (!rt) return next(new ErrorResponse("No Token Found , Access Denied", 403))
     try {
         const user = await userSchema.findOne({ refreshToken: rt });
         if (!user) return next(new ErrorResponse("No Token Found , Access Denied", 403))
+
         const deleteRt = user.deleteRefreshToken();
         res.clearCookie('rt')
+
         await user.save()
         res.status(200).json({
             success: true,
@@ -125,26 +122,3 @@ export const resetPassword = async (req, res, next) => {
     }
 
 };
-
-const sendTokens = async (user, statusCode, res, next) => {
-    try {
-        const accessToken = await user.getAccessToken();
-        const refreshToken = await user.getRefreshToken();
-        await user.save()
-        let options = {
-            maxAge: 1000 * 60 * 60 * 24 * 30, // would expire after 1month
-            httpOnly: true,
-            secure: false,
-            signed: true
-        };
-        res.cookie('rt', refreshToken, options);
-        res.status(statusCode).json({
-            success: true,
-            accessToken,
-            refreshToken
-        })
-    } catch (error) {
-        next(error)
-    }
-};
-
