@@ -28,10 +28,10 @@ const User = new Schema({
         ],
         select: false
     },
-    status: {
-        type: String,
-        default: "pending"
-    }
+    active: {
+        type: Boolean,
+        default: false
+    },
     refreshToken: String,
     verificationToken: String,
     resetPasswordToken: String,
@@ -69,8 +69,12 @@ User.methods.getResetPasswordToken = function () {
 }
 User.methods.getVerificationToken = function () {
     const verificationToken = CryptoJS.lib.WordArray.random(20).toString();
-
-
+    this.verificationToken = verificationToken;
+    return verificationToken;
+}
+User.methods.activeUser = function () {
+    this.active = true;
+    this.verificationToken = undefined;
 }
 
 const userSchema = mongoose.model('users', User);
