@@ -13,7 +13,7 @@ export const register = async (req, res, next) => {
         })
         const verification = newUser.getVerificationToken();
         await newUser.save()
-        await sendMail(process.env.FE_URL, "/verify/", verification, next)
+        await sendMail(process.env.FE_URL, "/active/", verification, next)
 
         res.status(201).json({
             success: true,
@@ -32,7 +32,7 @@ export const sendVerification = async (req, res, next) => {
         if (!user) return next(new ErrorResponse("Invalid Credentials", 401));
 
         const verification = user.getVerificationToken();
-        await sendMail(process.env.FE_URL, "/verify/", verification, next)
+        await sendMail(process.env.FE_URL, "/active/", verification, next)
 
         res.status(201).json({
             success: true,
@@ -139,6 +139,7 @@ export const resetPassword = async (req, res, next) => {
     try {
         const user = await userSchema.findOne({ resetPasswordToken: resetToken, resetPasswordExpire: { $gt: Date.now() } });
         if (!user) return next(new ErrorResponse("Invalid Reset Token", 400));
+        if (user && !password) return res.status(200).json({ success: true, data: "Token Is Valid" });
         user.password = password;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
