@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-#Authorization Api Made With  Express Includes Lot Of Logics
-
-#For Start
-You should add this options to "config.env" file :
-=======
 # Authorization Api Made With  Express Includes Lot Of Logics
 
 **For Start**
