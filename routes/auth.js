@@ -12,4 +12,8 @@ Router.delete('/logout', logout)
 Router.post('/forgetPassword', forgetPassword);
 Router.put('/resetPassword/:resetToken', resetPassword);
 
+Router.get('/privateRoute' , userAuth , (req,res) => {
+    res.send("Private Route");
+})
+
 export default Router;
